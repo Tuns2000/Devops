@@ -1,0 +1,37 @@
+services:
+  microservice1:
+    build: 
+      context: ./microservice1
+    container_name: generator-service
+    ports:
+      - "5001:5001"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  microservice2:
+    build: 
+      context: ./microservice2
+    container_name: processor-service
+    ports:
+      - "5002:5002"
+    environment:
+      - GENERATOR_URL=http://microservice1:5001
+    depends_on:
+      microservice1:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  microservices-network:
+    driver: bridge
